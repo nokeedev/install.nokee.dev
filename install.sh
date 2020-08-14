@@ -84,7 +84,7 @@ fi
 
 ohai "Downloading and installing Nokee..."
 (
-  execute "curl" "-o" "${HOME}/.gradle/init.d/nokee.init.gradle" "https://raw.githubusercontent.com/nokeedev/gradle-native/master/nokee.init.gradle"
+  execute "curl" "-o" "${HOME}/.gradle/init.d/nokee.init.gradle" "https://raw.githubusercontent.com/nokeedev/init.nokee.dev/master/nokee.init.gradle"
 ) || exit 1
 
 ohai "Installation successful!"
