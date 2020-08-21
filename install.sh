@@ -1,5 +1,10 @@
-#!/bin/bash
-set -u
+#!/usr/bin/env bash
+
+# nokee getter
+# usage: bash <(curl -s <my location>) [branch] [installdir]
+
+set -o pipefail
+#set -u
 
 # string formatters
 if [[ -t 1 ]]; then
@@ -22,6 +27,10 @@ shell_join() {
     printf " "
     printf "%s" "${arg// /\ }"
   done
+}
+
+logo() {
+  printf "${tty_blue}${tty_bold}%s${tty_reset}\n" "$1"
 }
 
 ohai() {
@@ -58,6 +67,16 @@ wait_for_user() {
   fi
 }
 
+logo ""
+logo "                 _                               "
+logo "     _ __   ___ | | _____  ___                   "
+logo "    | '_ \ / _ \| |/ / _ \/ _ \                  "
+logo "    | | | | (_) |   <  __/  __/                  "
+logo "    |_| |_|\___/|_|\_\___|\___| installer        "
+logo "         Painless native development with Gradle "
+logo "                                                 "
+logo "   👉  Manual: https://nokee.dev/getting-started "
+logo "                                                 "
 ohai "This script will install:"
 echo "${HOME}/.gradle/init.d/nokee.init.gradle"
 
@@ -74,7 +93,7 @@ if [[ "${#mkdirs[@]}" -gt 0 ]]; then
   printf "%s\n" "${mkdirs[@]}"
 fi
 
-if [[ -t 0 && -z "${CI-}" ]]; then
+if [[ -n "${NOKEE_TESTING+set}" || -t 0 && -z "${CI-}" ]]; then
   wait_for_user
 fi
 
@@ -84,7 +103,7 @@ fi
 
 ohai "Downloading and installing Nokee..."
 (
-  execute "curl" "-o" "${HOME}/.gradle/init.d/nokee.init.gradle" "https://raw.githubusercontent.com/nokeedev/init.nokee.dev/master/nokee.init.gradle"
+  execute "curl" "-o" "${HOME}/.gradle/init.d/nokee.init.gradle" "https://raw.githubusercontent.com/nokeedev/init.nokee.dev/main/nokee.init.gradle"
 ) || exit 1
 
 ohai "Installation successful!"

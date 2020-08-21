@@ -1,11 +1,37 @@
+:jbake-type: page
+:jbake-status: published
+
+= Installation
 Use the following command to install Nokee on your system:
 
-NOTE: Please inspect https://raw.githubusercontent.com/nokeedev/install.nokee.dev/main/install.sh prior to running any of these scripts to ensure safety.
+IMPORTANT: Please inspect https://raw.githubusercontent.com/nokeedev/install.nokee.dev/main/install.sh and/or https://raw.githubusercontent.com/nokeedev/install.nokee.dev/main/install.ps1 prior to running any of these scripts to ensure safety.
 We already know it's safe, but you should verify the security and contents of *any* script from the internet you are not familiar with.
 All of these scripts download a remote shell script and execute it on your machine.
 We take security very seriously.
 
-For *nix system: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/nokeedev/install.nokee.dev/main/install.sh)"`
+[[curl]]
+==== via curl
 
-For Windows system: Coming soon!
+.Install using curl
+[source,sh]
+----
+bash <(curl -fsSL https://nokee.dev/install.sh)
+----
 
+[[wget]]
+==== via wget
+
+.Install using wget
+[source,sh]
+----
+bash <(wget https://nokee.dev/install.sh -O -)
+----
+
+[[powershell]]
+==== via powershell
+
+.Install using powershell
+[source,powershell]
+----
+Set-ExecutionPolicy Bypass -Scope Process -Force; Invoke-Expression (Invoke-Webrequest 'https://nokee.dev/install.ps1' -UseBasicParsing).Content
+----
