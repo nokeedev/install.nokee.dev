@@ -1,0 +1,86 @@
+buildscript {
+    dependencies {
+        classpath 'dev.nokee.docs:site:latest.integration' // For adhoc task types
+    }
+    repositories {
+        jcenter()
+        maven { url = 'https://dl.bintray.com/nokeedev/documentations' }
+        maven { url = 'https://dl.bintray.com/nokeedev/distributions-snapshots' }
+    }
+}
+
+plugins {
+    id 'groovy'
+    id 'dev.nokee.documentation.github-pages-publish' version '0.2.5'
+}
+
+import dev.nokee.docs.publish.githubpages.tasks.PublishToGitHubPages
+import dev.nokee.docs.site.tasks.GenerateGitHubPagesCustomDomainCanonicalNameRecord
+import dev.nokee.docs.site.tasks.GenerateGitHubPagesNoJekyll
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+repositories {
+    jcenter()
+    maven { url = 'https://dl.bintray.com/nokeedev/distributions-snapshots' }
+}
+
+dependencies {
+    testImplementation 'dev.nokee:coreExec:0.5.0-198956b7'
+    testImplementation platform('org.spockframework:spock-bom:1.2-groovy-2.5')
+    testImplementation 'org.spockframework:spock-core'
+    testImplementation 'org.apache.commons:commons-lang3:latest.release'
+    testImplementation 'dev.gradleplugins:gradle-fixtures-file-system:latest.integration'
+    testImplementation 'org.asciidoctor:asciidoctorj-api:2.2.0'
+    testImplementation 'org.asciidoctor:asciidoctorj:2.2.0'
+}
+
+def expectedNokeeInitScript = layout.buildDirectory.file('nokee.init.gradle.expected')
+def fetchNokeeInitScriptTask = tasks.register('fetchExpectedNokeeInitScript') { task ->
+    task.outputs.file(expectedNokeeInitScript)
+    task.doLast {
+        expectedNokeeInitScript.get().asFile.text = project.resources.text.fromUri('https://raw.githubusercontent.com/nokeedev/init.nokee.dev/main/nokee.init.gradle').asString()
+    }
+}
+
+tasks.named('test', Test) { task ->
+    task.dependsOn(fetchNokeeInitScriptTask)
+
+    task.inputs.file('install.ps1')
+    task.inputs.file('install.sh')
+    task.inputs.file('README.adoc')
+    task.inputs.file(expectedNokeeInitScript)
+
+    task.systemProperty('dev.nokee.install.ps1', file('install.ps1'))
+    task.systemProperty('dev.nokee.install.sh', file('install.sh'))
+    task.systemProperty('dev.nokee.install.readme', file('README.adoc'))
+    task.systemProperty('dev.nokee.install.init', expectedNokeeInitScript.get().asFile)
+}
+
+// TODO: Publish README.adoc renamed/moved to install/index.adoc as jbake-content to be hosted as nokee.dev/install/
+// TODO: Render README.adoc to index.html (renamed to index.adoc) and include in site to be published on install.nokee.dev
+// TODO: Publish install.ps1 and install.sh as jbake-asset and consume under nokee.dev to host under nokee.dev/install.ps1 + nokee.dev/install.sh
+
+// GitHub Pages
+def customDomainTask = tasks.register('generateCustomDomainAlias', GenerateGitHubPagesCustomDomainCanonicalNameRecord) { task ->
+    task.getOutputFile().set(layout.buildDirectory.file('CNAME'))
+    task.getCustomDomain().set(task.subdomain('install.nokee.dev'))
+}
+
+def noJekyllTask = tasks.register('generateNoJekyll', GenerateGitHubPagesNoJekyll)
+
+def siteTask = tasks.register('site', Sync) { task ->
+    task.from(file('install.ps1'))
+    task.from(file('install.sh'))
+    task.from(customDomainTask.flatMap { it.outputFile })
+    task.from(noJekyllTask.flatMap { it.outputFile })
+    task.destinationDir = layout.buildDirectory.dir('site').get().asFile
+}
+
+tasks.named('publishToGitHubPages', PublishToGitHubPages) { task ->
+    task.publishDirectory.fileProvider(siteTask.map { it.destinationDir })
+    task.uri = uri('https://github.com/nokeedev/install.nokee.dev.git') // TODO: Should auto-detect to current repo
+}

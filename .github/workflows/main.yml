@@ -1,0 +1,35 @@
+name: CI
+
+on: push
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Check all resources
+        id: gradle
+        uses: eskatos/gradle-command-action@v1
+        with:
+          arguments: check --scan
+          wrapper-cache-enabled: true
+          dependencies-cache-enabled: true
+
+  publish:
+    needs: check
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Publish to GitHub Pages
+      id: gradle
+      uses: eskatos/gradle-command-action@v1
+      with:
+        arguments: publish --scan
+        wrapper-cache-enabled: true
+        dependencies-cache-enabled: true
+      env:
+        GITHUB_KEY: nokeedevbot
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
